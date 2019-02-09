@@ -64,7 +64,7 @@ proc train_separator*[T](x: array[T, Tensor[float32]]): float32 =
     for i in 0..T:
         for n in 0..9:
             let x_train = ctx.variable x[i][_, _, n...n*3].unsqueeze(1)
-            let loss = model.forward(x_train).sigmoid_cross_entropy(true)
+            let loss = model.forward(x_train).sigmoid_cross_entropy(0)
             loss.backprop()
             optim.update()
             if i == T and n == 9:
@@ -76,7 +76,7 @@ proc train_separator*[T](x: array[T, Tensor[float32]]): float32 =
             for k in 1..6:
                 x_final[_, _, k +5] = x[i+1][_, _, k-1]
             let x_train = ctx.variable x_final.unsqueeze(1)
-            let loss = model.forward(x_train).sigmoid_cross_entropy(false)
+            let loss = model.forward(x_train).sigmoid_cross_entropy(1)
             loss.backprop()
             optim.update()
 
@@ -97,7 +97,7 @@ proc test_separator*[T](x: array[T, Tensor[float32]]): float =
                 let x_test = ctx.variable x[i][_, _, n...n*3].unsqueeze(1)
                 let y_pred = model.forward(x_test).value.softmax.argmax(axis = 1).squeeze
 
-                result += accuracy_score(true, y_pred)
+                result += accuracy_score(0, y_pred)
             if i != T:
                 var x_final = newTensor[float32]([256, 256, 12])
                 for k in 0..5:
@@ -108,7 +108,7 @@ proc test_separator*[T](x: array[T, Tensor[float32]]): float =
                 let x_test = ctx.variable x_final.unsqueeze(1)
                 let y_pred = model.forward(x_test).value.softmax.argmax(axis = 1).squeeze
 
-                result += accuracy_score(false, y_pred)
+                result += accuracy_score(1, y_pred)
         result = result / 10*(T+1)
 
 proc run*(x: Tensor[float32]): Tensor[system.int] =
@@ -123,8 +123,8 @@ proc run_separator*(x: Tensor[float32]): Tensor[system.int] =
 
 template save*(path: string) =
     ctx.write_hdf5(path, "PhoNet")
-    ctx.write_hdf5(path, "SepNet")
+    ctx_separator.write_hdf5(path, "SepNet")
 
 template load*(path: string) =
     ctx.read_hdf5(path, "PhoNet")
-    ctx.read_hdf5(path, "SepNet")
+    ctx_separator.read_hdf5(path, "SepNet")
