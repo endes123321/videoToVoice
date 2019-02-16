@@ -4,22 +4,22 @@ const batch_size = 100
 
 #TODO unify
 proc imagesToTensor*[T: seq[byte] or string](buffers: array[10, T]): Tensor[float32] =
-    result = newTensor[float32]([256, 256, 30])
+    result = newTensor[float32]([30, 128, 256])
     for i in 0..9:
         let img = buffers[i].read_image().map_inline:
             x.float32 / 255.0
-        result[_, _, i] = img[256, 256, 0]
-        result[_, _, i*3 + 1] = img[256, 256, 1]
-        result[_, _, i*3 + 2] = img[256, 256, 2]
+        result[i*3, _, _] = img[0, 127, 255]
+        result[i*3 + 1, _, _] = img[1, 127, 255]
+        result[i*3 + 2, _, _] = img[2, 127, 255]
 
 proc sepImagesToTensor*[T: seq[byte] or string](buffers: array[4, T]): Tensor[float32] =
-    result = newTensor[float32]([256, 256, 12])
+    result = newTensor[float32]([12, 128, 256])
     for i in 0..3:
         let img = buffers[i].read_image().map_inline:
             x.float32 / 255.0
-        result[_, _, i] = img[256, 256, 0]
-        result[_, _, i*3 + 1] = img[256, 256, 1]
-        result[_, _, i*3 + 2] = img[256, 256, 2]
+        result[i*3, _, _] = img[0, 127, 255]
+        result[i*3 + 1, _, _] = img[1, 127, 255]
+        result[i*3 + 2, _, _] = img[2, 127, 255]
 
 proc mapJson(x: JsonNode): string =
     return x.getStr
